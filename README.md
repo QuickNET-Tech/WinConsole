@@ -10,6 +10,7 @@ Easily do the following to your console window:
 - Close
 - Create
 - Reallocate
+- Set the console window title
 - Enable/disable always on top
 - Disable/enable the close button
 - Automatically closes the console when the object is destructed
