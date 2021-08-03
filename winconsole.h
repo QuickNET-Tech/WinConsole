@@ -1,16 +1,18 @@
+#pragma once
+
 /*
 	Copyright (c) 2021 QuickNET
-	
+
 	Permission is hereby granted, free of charge, to any person obtaining a copy
 	of this software and associated documentation files (the "Software"), to deal
 	in the Software without restriction, including without limitation the rights
 	to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 	copies of the Software, and to permit persons to whom the Software is
 	furnished to do so, subject to the following conditions:
-	
+
 	The above copyright notice and this permission notice shall be included in all
 	copies or substantial portions of the Software.
-	
+
 	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -20,23 +22,17 @@
 	SOFTWARE.
 */
 
-#pragma once
-
 class WinConsole {
 public:
 
-	explicit WinConsole(LPCWSTR consoleWindowTitle = nullptr) :
-		consoleWindowHandle(createConsole(consoleWindowTitle)) {}
+	explicit WinConsole(char const* const consoleWindowTitle)
+		: consoleWindowHandle(createConsole(consoleWindowTitle)) {}
 
-#ifndef WIN_CONSOLE_ALLOW_COPY // define this to allow copying even though it makes no sense to do so
-	WinConsole(WinConsole const& wincon) = delete;
-	WinConsole operator=(WinConsole const& wincon) = delete;
-#endif
+	WinConsole(WinConsole const& wincon) = default;
+	WinConsole& operator=(WinConsole const&) = default;
 
-#ifndef WIN_CONSOLE_ALLOW_MOVE // define this to allow moving even though it makes no sense to do so
-	WinConsole(WinConsole&& wincon) = delete;
-	WinConsole operator=(WinConsole&& wincon) = delete;
-#endif
+	WinConsole(WinConsole&& wincon) = default;
+	WinConsole& operator=(WinConsole&& wincon) = default;
 
 	// destroy the console on destruction of the object
 	~WinConsole() {
@@ -44,18 +40,17 @@ public:
 	}
 
 	// forcefully close the console window
-	WinConsole& close() {
+	void close() {
 		removeIoRiderect();
 
 		FreeConsole();
 
-		DestroyWindow(consoleWindowHandle);
-
-		return *this;
+		// PostMessageA is used here because DestroyWindow has shown that it occasionally doesn't like to work 
+		PostMessageA(consoleWindowHandle, WM_CLOSE, 0, 0);
 	}
 
 	// create a console window
-	HWND createConsole(LPCWSTR consoleWindowTitle) {
+	HWND createConsole(char const* const consoleWindowTitle) {
 		AllocConsole();
 
 		redirectIoToConsole();
@@ -67,14 +62,14 @@ public:
 
 	// disable closing of console window
 	WinConsole& disableCloseButton() {
-		EnableMenuItem(GetSystemMenu(consoleWindowHandle, FALSE), SC_CLOSE, MF_BYCOMMAND | MF_DISABLED | MF_GRAYED);
+		EnableMenuItem(GetSystemMenu(consoleWindowHandle, 0), SC_CLOSE, MF_BYCOMMAND | MF_DISABLED | MF_GRAYED);
 
 		return *this;
 	}
 
-	// disable closing of console window
+	// enable closing of console window
 	WinConsole& enableCloseButton() {
-		EnableMenuItem(GetSystemMenu(consoleWindowHandle, FALSE), SC_CLOSE, MF_BYCOMMAND | MF_ENABLED);
+		EnableMenuItem(GetSystemMenu(consoleWindowHandle, 0), SC_CLOSE, MF_BYCOMMAND | MF_ENABLED);
 
 		return *this;
 	}
@@ -94,7 +89,7 @@ public:
 	}
 
 	// recreate the console window
-	WinConsole& reallocateConsole(LPCWSTR consoleWindowTitle = nullptr) {
+	WinConsole& reallocateConsole(char const* const consoleWindowTitle = nullptr) {
 		close();
 
 		consoleWindowHandle = createConsole(consoleWindowTitle);
@@ -126,9 +121,9 @@ public:
 	}
 
 	// set the title of the console window
-	WinConsole& setTitle(LPCWSTR consoleWindowTitle) {
+	WinConsole& setTitle(char const* const consoleWindowTitle) {
 		if(consoleWindowTitle) {
-			SetConsoleTitle(consoleWindowTitle);
+			SetConsoleTitleA(consoleWindowTitle);
 		}
 
 		return *this;
@@ -144,7 +139,6 @@ private:
 		freopen_s(&file, "CONIN$", "r", stdin);
 		freopen_s(&file, "CONOUT$", "w", stdout);
 		freopen_s(&file, "CONOUT$", "w", stderr);
-
 	}
 
 	void removeIoRiderect() {
@@ -153,27 +147,6 @@ private:
 		freopen_s(&file, "NUL:", "r", stdin);
 		freopen_s(&file, "NUL:", "w", stdout);
 		freopen_s(&file, "NUL:", "w", stderr);
-	}
-
-	// these are yet to be implemented, so they're private until then
-	// I need to call Shell_NotifyIconA and set up a PNOTIFYICONDATAA
-	// struct and might need to figure out how to get and set up some
-	// icon and it's all more of a pita than I thought it would be
-
-	// minimize the console window to the system tray
-	WinConsole& minimizeToTray() {
-		// TODO : insert code here
-
-		return *this;
-	}
-
-	// restore the console window from the system tray
-	WinConsole& restoreFromTray() {
-		// TODO : insert code here
-
-		// 'WinConsole::restore()' might do the trick instead?
-
-		return *this;
 	}
 
 };
