@@ -9,6 +9,7 @@ Easily do the following to your console window:
 - Show
 - Close
 - Create
+- Resize
 - Reallocate
 - Set the console window title
 - Enable/disable always on top
