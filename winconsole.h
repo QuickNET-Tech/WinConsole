@@ -74,6 +74,23 @@ public:
 		return *this;
 	}
 
+	// hide the console window completely
+	WinConsole& hide() {
+		ShowWindow(consoleWindowHandle, SW_HIDE);
+
+		return *this;
+	}
+
+	std::int32_t getColumns() {
+		CONSOLE_SCREEN_BUFFER_INFO consoleScreenBufferInfo;
+
+		if(GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &consoleScreenBufferInfo)) {
+			return consoleScreenBufferInfo.srWindow.Right - consoleScreenBufferInfo.srWindow.Left;
+		}
+
+		return 0;
+	}
+
 	// minimize the console to your taskbar
 	WinConsole& minimize() {
 		ShowWindow(consoleWindowHandle, SW_MINIMIZE);
@@ -81,11 +98,24 @@ public:
 		return *this;
 	}
 
-	// hide the console window completely
-	WinConsole& hide() {
-		ShowWindow(consoleWindowHandle, SW_HIDE);
+	bool multiplyHeight(std::int32_t const heightMultiplier) const {
+		RECT rect;
 
-		return *this;
+		if(!GetWindowRect(consoleWindowHandle, &rect)) {
+			return false;
+		}
+
+		return setHeight(static_cast<std::int32_t>(static_cast<float>(rect.bottom - rect.top) * heightMultiplier));
+	}
+
+	bool multiplyWidth(float const widthMultiplier) const {
+		RECT rect;
+		
+		if(!GetWindowRect(consoleWindowHandle, &rect)) {
+			return false;
+		}
+
+		return setWidth(static_cast<std::int32_t>(static_cast<float>(rect.right - rect.left) * widthMultiplier));
 	}
 
 	// recreate the console window
@@ -129,6 +159,26 @@ public:
 		return *this;
 	}
 
+	bool setHeight(std::int32_t const height) const {
+		RECT rect;
+
+		if(!GetWindowRect(consoleWindowHandle, &rect)) {
+			return false;
+		}
+
+		return SetWindowPos(consoleWindowHandle, nullptr, 0, 0, rect.right - rect.left, height, SWP_NOMOVE | SWP_NOZORDER);
+	}
+
+	std::int32_t setWidth(std::int32_t const width) const {
+		RECT rect;
+
+		if(!GetWindowRect(consoleWindowHandle, &rect)) {
+			return false;
+		}
+
+		return SetWindowPos(consoleWindowHandle, nullptr, 0, 0, width, rect.bottom - rect.top, SWP_NOMOVE | SWP_NOZORDER);
+	}
+	
 private:
 
 	HWND consoleWindowHandle {};
